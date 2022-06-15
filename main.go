@@ -16,16 +16,6 @@ type Maintainer struct {
 	Charts  []Chart `yaml:"charts"`
 }
 
-func (m Maintainers) Print() {
-	for _, i := range m {
-		fmt.Println(i.String())
-	}
-}
-
-func (m Maintainer) String() string {
-	return fmt.Sprintf("{Name: %s, Contact: %v, Charts: %v}\n", m.Name, m.Contact, m.Charts)
-}
-
 type Contact struct {
 	Email        string `yaml:"email"`
 	SlackChannel string `yaml:"slackChannel,omitempty"`
@@ -43,7 +33,7 @@ type IndexFile struct {
 }
 
 func main() {
-	maintainersFilePath := "/Users/steven/Desktop/maintainers.yaml"
+	maintainersFilePath := "./maintainers.yaml"
 	indexFilePath := "./charts/index.yaml"
 	if err := validateMaintainersFile(maintainersFilePath, indexFilePath); err != nil {
 		fmt.Println(err)
@@ -55,8 +45,6 @@ func validateMaintainersFile(maintainersFilePath, indexFilePath string) error {
 	if err != nil {
 		fmt.Println(err)
 	}
-	// maintainers.Print()
-
 	// Build map of charts from maintainers file and validate it there are no chart or label duplicates
 	maintainersCharts := make(map[string]struct{})
 	duplicateCharts := make(map[string]struct{})
@@ -91,14 +79,12 @@ func validateMaintainersFile(maintainersFilePath, indexFilePath string) error {
 	if len(index.Entries) == 0 {
 		fmt.Println("error: index file [%s] has no chart entries", indexFilePath)
 	}
-
 	// Validate all charts in the index file exist in the maintainers file
 	for chartName := range index.Entries {
 		if _, ok := maintainersCharts[chartName]; !ok {
 			fmt.Printf("error: chart [%s] is missing from maintainers file [%s]\n", chartName, maintainersFilePath)
 		}
 	}
-
 	// Validate all charts in the maintainers file exist in the index file
 	for chartName := range maintainersCharts {
 		if _, ok := index.Entries[chartName]; !ok {
@@ -106,38 +92,6 @@ func validateMaintainersFile(maintainersFilePath, indexFilePath string) error {
 		}
 		delete(index.Entries, chartName)
 	}
-
-	// index, err := decodeIndexFile(indexFilePath)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// for chartName := range index.Entries {
-	// 	if _, ok := maintainersCharts[chartName]; !ok {
-	// 		fmt.Printf("error: chart %q is missing from maintainers file %s\n", chartName, maintainersFilePath)
-	// 	}
-	// }
-
-	// var in IndexFile
-	// file, _ := os.Open(indexFilePath)
-	// defer file.Close()
-	// _ = decodeYAMLFile(file, &in)
-	// fmt.Printf("%v\n", in)
-
-	// assetsPath := "./charts/assets"
-	// assetsDirs, err := os.ReadDir(assetsPath)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// for _, d := range assetsDirs {
-	// 	assetName := d.Name()
-	// 	if strings.EqualFold(assetName, "logos") {
-	// 		continue
-	// 	}
-	// 	if _, ok := maintainersCharts[assetName]; !ok {
-	// 		fmt.Printf("error: chart %q is missing from maintainers file %s\n", assetName, path)
-	// 	}
-	// }
-
 	return nil
 }
 
@@ -166,19 +120,6 @@ func decodeIndexFile(path string) (*IndexFile, error) {
 	}
 	return &index, nil
 }
-
-// func decodeIndexFile(path string) (*repo.IndexFile, error) {
-// 	var index repo.IndexFile
-// 	file, err := os.Open(path)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer file.Close()
-// 	if err := decodeYAMLFile(file, &index); err != nil {
-// 		return nil, err
-// 	}
-// 	return &index, nil
-// }
 
 func decodeYAMLFile(r io.Reader, target interface{}) error {
 	data, err := io.ReadAll(r)
